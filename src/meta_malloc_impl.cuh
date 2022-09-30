@@ -5,7 +5,6 @@
 #include <fstream>
 #include "meta_malloc.cuh"
 
-
 // https://stackoverflow.com/a/28166605
 #if defined(__GNUC__) || defined(__GNUG__)
 	#define ALL_DEVICES __attribute__ ((device)) __attribute__ ((host))
@@ -101,8 +100,9 @@ ALL_DEVICES void LogDataArray::print_at_index(size_t i) {
 HOST std::string LogDataArray::data_to_s(size_t i) {
 	// CSV format
 	// Kernel name, grid dim, block dim, type, clock, thread idx, block idx, address, memory size
-
 	std::stringstream string_stream;
+
+
 
 	string_stream << 
 		kernel_name  << ',' <<
@@ -125,15 +125,12 @@ HOST std::string LogDataArray::data_to_s(size_t i) {
 	return string_stream.str();
 }
 
-
-
 HOST void LogDataArray::write_to_file(std::string filename) {
 	for (size_t i = 0; i < length(); i++){
-		std::cout << data_to_s(i) << '\n'; // -> write to file
+		print_at_index(i);
+		// std::cout << data_to_s(i) << '\n'; // -> write to file
 	}
 }
-
-
 
 template <typename MemoryAllocator>
 DEVICE __forceinline__ void* MemoryManager<MemoryAllocator>::malloc(size_t size, LogDataArray log_data) {
