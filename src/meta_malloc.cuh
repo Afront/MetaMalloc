@@ -50,6 +50,7 @@ struct LogDataArray {
 	HOST void write_to_file(std::string filename);
 };
 
+template <typename MemoryAllocator>
 class MemoryManager {
 	MemoryAllocator memory_allocator;
 

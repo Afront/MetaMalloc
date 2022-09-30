@@ -1,9 +1,10 @@
-/*#include <iostream>
+#ifndef MetaMallocImpl
+#define MetaMallocImpl
+#include <iostream>
 #include <sstream>
 #include <fstream>
-#include <tl/expected.hpp>
 #include "meta_malloc.cuh"
-#include "meta_malloc_impl.cuh"
+
 
 // https://stackoverflow.com/a/28166605
 #if defined(__GNUC__) || defined(__GNUG__)
@@ -14,10 +15,10 @@
 #elif defined(_MSC_VER)
 // https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/dabb5z75(v=vs.110)?redirectedfrom=MSDN
 // https://stackoverflow.com/questions/28411283/dealing-with-attribute-in-msvc
-	// #define ALL_DEVICES __declspec(device) __declspec(host)
-	// #define DEVICE __declspec(device)
-	// #define HOST __declspec(host)
-	// #define GLOBAL __declspec(global)
+/*	#define ALL_DEVICES __declspec(device) __declspec(host)
+	#define DEVICE __declspec(device)
+	#define HOST __declspec(host)
+	#define GLOBAL __declspec(global)*/
 	#ifdef __CUDACC__
 		#define ALL_DEVICES __device__ __host__
 		#define DEVICE __device__
@@ -30,14 +31,6 @@
 		#define GLOBAL
 	#endif
 #endif
-
-using CUDAResult = tl::expected<bool, cudaError_t>;
-
-// CUDAResult to_CUDAResult(cudaError_t error) {
-
-// 	return (error == cudaSuccess) ? true : tl::make_unexpected(error);
-// }
-
 
 HOST void error_check(cudaError_t error) {
 	if (error != cudaSuccess){
@@ -139,4 +132,36 @@ HOST void LogDataArray::write_to_file(std::string filename) {
 		std::cout << data_to_s(i) << '\n'; // -> write to file
 	}
 }
-*/
+
+
+
+template <typename MemoryAllocator>
+DEVICE __forceinline__ void* MemoryManager<MemoryAllocator>::malloc(size_t size, LogDataArray log_data) {
+	// 3 "heavy" calls: malloc, clock64 read, printf
+	// not sure how to order
+
+	// technically should benchmark here instead
+	auto pointer = memory_allocator.malloc(size);
+	// should end benchmark here
+
+	// printf("pointer %p\n", pointer);
+
+	auto tid = threadIdx.x + blockIdx.x * blockDim.x;
+
+	log_data.clock_arr[tid] = clock64();
+	log_data.thread_id_arr[tid] = threadIdx.x;
+	log_data.block_id_arr[tid] = blockIdx.x;
+	log_data.address_arr[tid] = pointer;
+	log_data.memory_size_arr[tid] = size;
+	log_data.type_arr[tid] = "malloc";
+
+	log_data.print_at_index(tid);
+	return pointer;
+}
+
+template <typename MemoryAllocator>
+DEVICE __forceinline__ void MemoryManager<MemoryAllocator>::free(void* pointer) {
+	return memory_allocator.free(pointer);
+}
+
+#endif
