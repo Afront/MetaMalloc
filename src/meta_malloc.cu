@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <tl/expected.hpp>
 
 // https://stackoverflow.com/a/28166605
 #if defined(__GNUC__) || defined(__GNUG__)
@@ -28,6 +29,21 @@
 	#endif
 #endif
 
+using CUDAResult = tl::expected<bool, cudaError_t>;
+/*
+CUDAResult to_CUDAResult(cudaError_t error) {
+
+	return (error == cudaSuccess) ? true : tl::make_unexpected(error);
+}
+*/
+
+HOST void error_check(cudaError_t error) {
+	if (error != cudaSuccess){
+		std::cout << "Error: " << cudaGetErrorString(error) << '\n';
+		exit(1);
+	}
+}
+
 struct LogDataArray {
 	char* kernel_name;
 	const dim3 block_dim;
@@ -46,7 +62,8 @@ struct LogDataArray {
 	}
 
 	HOST LogDataArray(std::string kernel_name_str, const dim3& grid_dim, const dim3& block_dim) : block_dim(block_dim), grid_dim(grid_dim) {
-		CHECK_ERROR(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
+		// to_CUDAResult(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
+		error_check(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
 
 		size_t i = 0;
 		for(auto&& c : kernel_name_str) {
@@ -54,22 +71,22 @@ struct LogDataArray {
 			i++;
 		}
 
-		CHECK_ERROR(cudaMallocManaged(&clock_arr, sizeof(int64_t) * length()));
-		CHECK_ERROR(cudaMallocManaged(&thread_id_arr, sizeof(int32_t) * length()));
-		CHECK_ERROR(cudaMallocManaged(&block_id_arr, sizeof(int32_t) * length()));
-		CHECK_ERROR(cudaMallocManaged(&address_arr, sizeof(void*) * length()));
-		CHECK_ERROR(cudaMallocManaged(&memory_size_arr, sizeof(size_t) * length()));
-		CHECK_ERROR(cudaMallocManaged(&type_arr, sizeof(char*) * length()));
+		error_check(cudaMallocManaged(&clock_arr, sizeof(int64_t) * length()));
+		error_check(cudaMallocManaged(&thread_id_arr, sizeof(int32_t) * length()));
+		error_check(cudaMallocManaged(&block_id_arr, sizeof(int32_t) * length()));
+		error_check(cudaMallocManaged(&address_arr, sizeof(void*) * length()));
+		error_check(cudaMallocManaged(&memory_size_arr, sizeof(size_t) * length()));
+		error_check(cudaMallocManaged(&type_arr, sizeof(char*) * length()));
 	}
 
 	HOST void free() {
-		CHECK_ERROR(cudaFree(kernel_name));
-		CHECK_ERROR(cudaFree(clock_arr));
-		CHECK_ERROR(cudaFree(thread_id_arr));
-		CHECK_ERROR(cudaFree(block_id_arr));
-		CHECK_ERROR(cudaFree(address_arr));		
-		CHECK_ERROR(cudaFree(memory_size_arr));
-		CHECK_ERROR(cudaFree(type_arr));
+		error_check(cudaFree(kernel_name));
+		error_check(cudaFree(clock_arr));
+		error_check(cudaFree(thread_id_arr));
+		error_check(cudaFree(block_id_arr));
+		error_check(cudaFree(address_arr));		
+		error_check(cudaFree(memory_size_arr));
+		error_check(cudaFree(type_arr));
 	
 	}
 
@@ -82,9 +99,10 @@ struct LogDataArray {
 			"blockDim.x: %d,"
 			"blockDim.y: %d,"
 			"blockDim.z: %d,"
-			"address: %p,\n",
-			"memory_size: %d\n",
-
+			"address: %p"
+			"memory_size: %lu"
+//			""
+			"\n",
 			kernel_name,
 			clock_arr[i],
 			thread_id_arr[i],
@@ -135,6 +153,8 @@ struct LogDataArray {
 	}
 };
 
+
+template <typename MemoryAllocator>
 class MemoryManager {
 	MemoryAllocator memory_allocator;
 
