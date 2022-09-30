@@ -53,12 +53,17 @@ HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_di
 		i++;
 	}
 
+
 	error_check(cudaMallocManaged(&clock_arr, sizeof(int64_t) * length()));
-	error_check(cudaMallocManaged(&thread_id_arr, sizeof(int32_t) * length()));
-	error_check(cudaMallocManaged(&block_id_arr, sizeof(int32_t) * length()));
+	error_check(cudaMallocManaged(&thread_id_arr, sizeof(dim3) * length()));
+	error_check(cudaMallocManaged(&block_id_arr, sizeof(dim3) * length()));
 	error_check(cudaMallocManaged(&address_arr, sizeof(void*) * length()));
 	error_check(cudaMallocManaged(&memory_size_arr, sizeof(size_t) * length()));
-	error_check(cudaMallocManaged(&type_arr, sizeof(char*) * length()));
+	error_check(cudaMallocManaged(&type_arr, sizeof(size_t) * length()));
+
+	std::cout << "kernel name, type, clock, address, memory_size, gridDim.x, gridDim.y, gridDim.z, gridDim.z, blockDim.x, blockDim.y, blockDim.z, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z";
+
+
 }
 
 HOST void LogDataArray::free() {
@@ -69,31 +74,46 @@ HOST void LogDataArray::free() {
 	error_check(cudaFree(address_arr));		
 	error_check(cudaFree(memory_size_arr));
 	error_check(cudaFree(type_arr));
-
 }
 
 ALL_DEVICES void LogDataArray::print_at_index(size_t i) {
+	// Kernel name, grid dim, block dim, type, clock, thread idx, block idx, address, memory size
 	printf(
-		"kernel name: %s,"
-		"clock: %li,"
-		"threadIdx.x: %d,"
-		"blockIdx.x: %d,"
-		"blockDim.x: %d,"
-		"blockDim.y: %d,"
-		"blockDim.z: %d,"
-		"address: %p"
-		"memory_size: %lu"
-//			""
+		"%s,"	// kernel name
+		"%s,"	// type
+		"%li,"	// clock
+		"%p,"	// address
+		"%lu"	// memory_size
+		"%d,"	// gridDim.x
+		"%d,"	// gridDim.y
+		"%d,"	// gridDim.z
+		"%d,"	// blockDim.x
+		"%d,"	// blockDim.y
+		"%d,"	// blockDim.z
+		"%d,"	// blockIdx.x
+		"%d,"	// blockIdx.y
+		"%d,"	// blockIdx.z
+		"%d,"	// threadIdx.x
+		"%d,"	// threadIdx.y
+		"%d"	// threadIdx.z
 		"\n",
 		kernel_name,
+		type_arr[i] == 0 ? "malloc" : "free",
 		clock_arr[i],
-		thread_id_arr[i],
-		block_id_arr[i],
+		address_arr[i],
+		memory_size_arr[i],
+		grid_dim.x,
+		grid_dim.y,
+		grid_dim.z,
 		block_dim.x,
 		block_dim.y,
 		block_dim.z,
-		address_arr[i],
-		memory_size_arr[i]
+		block_id_arr[i].x,
+		block_id_arr[i].y,
+		block_id_arr[i].z,
+		thread_id_arr[i].x,
+		thread_id_arr[i].y,
+		thread_id_arr[i].z
 	);
 }
 
@@ -102,9 +122,7 @@ HOST std::string LogDataArray::data_to_s(size_t i) {
 	// Kernel name, grid dim, block dim, type, clock, thread idx, block idx, address, memory size
 	std::stringstream string_stream;
 
-
-
-	string_stream << 
+/*	string_stream << 
 		kernel_name  << ',' <<
 		grid_dim.x << ',' <<
 		grid_dim.y << ',' <<
@@ -113,15 +131,15 @@ HOST std::string LogDataArray::data_to_s(size_t i) {
 		block_dim.y << ',' <<
 		block_dim.z << ',' <<
 
-		type_arr[i] << ',' <<
+		// type_arr[i] << ',' <<
 
 		clock_arr[i] << ',' <<
 		thread_id_arr[i] << ',' <<
 		block_id_arr[i] << ',' <<
-		address_arr[i] // << ',' <<
-		// memory_size_arr[i]
+		address_arr[i] << ',' <<
+		memory_size_arr[i]
 		<< std::endl;
-
+*/
 	return string_stream.str();
 }
 
@@ -146,13 +164,15 @@ DEVICE __forceinline__ void* MemoryManager<MemoryAllocator>::malloc(size_t size,
 	auto tid = threadIdx.x + blockIdx.x * blockDim.x;
 
 	log_data.clock_arr[tid] = clock64();
-	log_data.thread_id_arr[tid] = threadIdx.x;
-	log_data.block_id_arr[tid] = blockIdx.x;
+	log_data.thread_id_arr[tid] = threadIdx;
+
+
+	log_data.block_id_arr[tid] = blockIdx;
 	log_data.address_arr[tid] = pointer;
 	log_data.memory_size_arr[tid] = size;
-	log_data.type_arr[tid] = "malloc";
+	log_data.type_arr[tid] = 0; // MemoryOperation::Allocation;
 
-	log_data.print_at_index(tid);
+
 	return pointer;
 }
 

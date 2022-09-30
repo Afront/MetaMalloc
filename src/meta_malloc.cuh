@@ -30,17 +30,79 @@
 	#endif
 #endif
 
+/*class String {
+	char* string;
+
+public:
+	ALL_DEVICES String(const char* string) {
+		malloc();
+
+
+	}
+
+	~String(){ 
+
+
+	}
+
+
+	ALL_DEVICES const char* str() {
+		return string;
+	}
+
+}
+*/
+
+using String = const char*;
+
+enum class MemoryOperation {
+	Free,
+	Allocation
+};
+
+enum memoryOperation {
+	Free,
+	Allocation
+};
+
+const char* to_s(MemoryOperation memory_operation) {
+	switch (memory_operation) {
+		case MemoryOperation::Free:
+			return "free";
+		case MemoryOperation::Allocation:
+			return "malloc";
+	}
+}
+
+std::ostream& operator<< (std::ostream& os, MemoryOperation memory_operation) {
+	return os << to_s(memory_operation);
+}
+
+
+
+
+
+/*std::stringstream& operator<< (std::stringstream& ss, MemoryOperation memory_operation) {
+	switch (memory_operation) {
+		case MemoryOperation::Free:
+			return ss << "free";
+		case MemoryOperation::Allocation:
+			return ss << "malloc";
+	}
+}
+
+*/
 struct LogDataArray {
 	char* kernel_name;
 	const dim3 block_dim;
 	const dim3 grid_dim;
 
 	int64_t* clock_arr;
-	int32_t* thread_id_arr;
-	int32_t* block_id_arr;
+	dim3* thread_id_arr;
+	dim3* block_id_arr;
 	void** address_arr;
 	size_t* memory_size_arr;
-	const char** type_arr;
+	size_t* type_arr;
 
 	ALL_DEVICES size_t length();
 	HOST LogDataArray(std::string kernel_name_str, const dim3& grid_dim, const dim3& block_dim);
