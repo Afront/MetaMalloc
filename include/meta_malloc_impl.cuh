@@ -231,7 +231,7 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size) : memory_al
 		"blockIdx.z,"
 		"threadIdx.x,"
 		"threadIdx.y,"
-		"threadIdx.z," 
+		"threadIdx.z" 
 		<< std::endl;
 
 }
