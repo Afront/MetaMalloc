@@ -11,12 +11,6 @@
 	#define HOST __attribute__ ((host))
 	#define GLOBAL __attribute__ ((global))
 #elif defined(_MSC_VER)
-// https://learn.microsoft.com/en-us/previous-versions/visualstudio/visual-studio-2012/dabb5z75(v=vs.110)?redirectedfrom=MSDN
-// https://stackoverflow.com/questions/28411283/dealing-with-attribute-in-msvc
-/*	#define ALL_DEVICES __declspec(device) __declspec(host)
-	#define DEVICE __declspec(device)
-	#define HOST __declspec(host)
-	#define GLOBAL __declspec(global)*/
 	#ifdef __CUDACC__
 		#define ALL_DEVICES __device__ __host__
 		#define DEVICE __device__
@@ -29,31 +23,6 @@
 		#define GLOBAL
 	#endif
 #endif
-
-/*class String {
-	char* string;
-
-public:
-	ALL_DEVICES String(const char* string) {
-		malloc();
-
-
-	}
-
-	~String(){ 
-
-
-	}
-
-
-	ALL_DEVICES const char* str() {
-		return string;
-	}
-
-}
-*/
-
-using String = const char*;
 
 enum class MemoryOperation {
 	Free,
@@ -74,24 +43,9 @@ const char* to_s(MemoryOperation memory_operation) {
 	}
 }
 
-std::ostream& operator<< (std::ostream& os, MemoryOperation memory_operation) {
-	return os << to_s(memory_operation);
-}
-
-
-
-
-
-/*std::stringstream& operator<< (std::stringstream& ss, MemoryOperation memory_operation) {
-	switch (memory_operation) {
-		case MemoryOperation::Free:
-			return ss << "free";
-		case MemoryOperation::Allocation:
-			return ss << "malloc";
-	}
-}
-
-*/
+/**
+ * @brief      Consists of allocation-related information to be stored in a CSV-row format
+ */
 struct LogDataArray {
 	char* kernel_name;
 	const dim3 block_dim;
@@ -107,11 +61,16 @@ struct LogDataArray {
 	ALL_DEVICES size_t length();
 	HOST LogDataArray(std::string kernel_name_str, const dim3& grid_dim, const dim3& block_dim);
 	HOST void free();
-	ALL_DEVICES void print_at_index(size_t i);
 	HOST std::string data_to_s(size_t i);
 	HOST void write_to_file(std::string filename);
 };
 
+
+/**
+ * @brief      This class describes a memory manager.
+ *
+ * @tparam     MemoryAllocator  An allocator that can allocate and free a portion of GPU-side memory (e.g. CUDA-Alloc, Ouroboros).
+ */
 template <typename MemoryAllocator>
 class MemoryManager {
 	MemoryAllocator memory_allocator;
@@ -121,5 +80,4 @@ public:
 	DEVICE __forceinline__ void* malloc(size_t size, LogDataArray log_data);
 	DEVICE __forceinline__ void free(void* pointer, LogDataArray log_data);
 };
-
 #endif
