@@ -2,7 +2,7 @@
 #define MetaMallocImpl
 #include <iostream>
 #include <sstream>
-// #include <fstream>
+#include <fstream>
 #include "meta_malloc.cuh"
 
 // https://stackoverflow.com/a/28166605
@@ -47,7 +47,6 @@ ALL_DEVICES size_t LogDataArray::length() {
 		grid_dim.x * grid_dim.y * grid_dim.z;
 }
 
-
 /**
  * @brief      Constructs a new instance of `LogDataArray`
  *
@@ -56,7 +55,6 @@ ALL_DEVICES size_t LogDataArray::length() {
  * @param[in]  block_dim        The block dimension
  */
 HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_dim, const dim3& block_dim) : block_dim(block_dim), grid_dim(grid_dim) {
-	// to_CUDAResult(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
 	error_check(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
 
 	size_t i = 0;
@@ -65,7 +63,6 @@ HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_di
 		i++;
 	}
 
-
 	error_check(cudaMallocManaged(&clock_arr, sizeof(int64_t) * length()));
 	error_check(cudaMallocManaged(&thread_id_arr, sizeof(dim3) * length()));
 	error_check(cudaMallocManaged(&block_id_arr, sizeof(dim3) * length()));
@@ -73,7 +70,6 @@ HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_di
 	error_check(cudaMallocManaged(&memory_size_arr, sizeof(size_t) * length()));
 	error_check(cudaMallocManaged(&type_arr, sizeof(size_t) * length()));
 }
-
 
 /**
  * @brief      Explicitly frees the `LogDataArray` object
@@ -89,112 +85,134 @@ HOST void LogDataArray::free() {
 }
 
 /**
- * @brief      Prints the row of the LogDataArray in a CSV row format
+ * @brief Converts an element of a LogDataArray object into a string in a CSV-row format
  *
  * @param[in]  i     The index
  */
-ALL_DEVICES void LogDataArray::print_at_index(size_t i) {
-	// Kernel name, grid dim, block dim, type, clock, thread idx, block idx, address, memory size
-	if (address_arr[i] != nullptr)
-		printf(
-			"%s,"	// kernel name
-			"%s,"	// type
-			"%li,"	// clock
-			"%p,"	// address
-			"%lu,"	// memory_size
-			"%d,"	// gridDim.x
-			"%d,"	// gridDim.y
-			"%d,"	// gridDim.z
-			"%d,"	// blockDim.x
-			"%d,"	// blockDim.y
-			"%d,"	// blockDim.z
-			"%d,"	// blockIdx.x
-			"%d,"	// blockIdx.y
-			"%d,"	// blockIdx.z
-			"%d,"	// threadIdx.x
-			"%d,"	// threadIdx.y
-			"%d"	// threadIdx.z
-			"\n",
-			kernel_name,
-			type_arr[i] == 0 ? "malloc" : "free",
-			clock_arr[i],
-			address_arr[i],
-			memory_size_arr[i],
-			grid_dim.x,
-			grid_dim.y,
-			grid_dim.z,
-			block_dim.x,
-			block_dim.y,
-			block_dim.z,
-			block_id_arr[i].x,
-			block_id_arr[i].y,
-			block_id_arr[i].z,
-			thread_id_arr[i].x,
-			thread_id_arr[i].y,
-			thread_id_arr[i].z
-		);
-}
-
 HOST std::string LogDataArray::data_to_s(size_t i) {
-	// CSV format
-	// Kernel name, grid dim, block dim, type, clock, thread idx, block idx, address, memory size
+	if (address_arr[i] == nullptr) return "";
 	std::stringstream string_stream;
 
-/*	string_stream << 
+	string_stream << 
 		kernel_name  << ',' <<
-		grid_dim.x << ',' <<
-		grid_dim.y << ',' <<
-		grid_dim.z << ',' <<
-		block_dim.x << ',' <<
-		block_dim.y << ',' <<
-		block_dim.z << ',' <<
+		(type_arr[i] == 0 ? "malloc" : "free") << ',' <<
+		clock_arr[i]   << ',' <<
+		address_arr[i]   << ',' <<
+		memory_size_arr[i]  << ',' <<
+		grid_dim.x  << ',' <<
+		grid_dim.y  << ',' <<
+		grid_dim.z  << ',' <<
+		block_dim.x  << ',' <<
+		block_dim.y  << ',' <<
+		block_dim.z  << ',' <<
+		block_id_arr[i].x  << ',' <<
+		block_id_arr[i].y  << ',' <<
+		block_id_arr[i].z  << ',' <<
+		thread_id_arr[i].x  << ',' <<
+		thread_id_arr[i].y  << ',' <<
+		thread_id_arr[i].z;
 
-		// type_arr[i] << ',' <<
-
-		clock_arr[i] << ',' <<
-		thread_id_arr[i] << ',' <<
-		block_id_arr[i] << ',' <<
-		address_arr[i] << ',' <<
-		memory_size_arr[i]
-		<< std::endl;
-*/
 	return string_stream.str();
 }
 
+/**
+ * @brief      Writes the input to a file
+ *
+ * @param[in]  filename  The filename
+ */
 HOST void LogDataArray::write_to_file(std::string filename) {
+	std::fstream file(filename, std::ios::out | std::ios::app);
+
 	for (size_t i = 0; i < length(); i++){
-		print_at_index(i);
-		// std::cout << data_to_s(i) << '\n'; // -> write to file
+		auto data_str = data_to_s(i);
+		if (data_str != "") file << data_str << '\n'; // -> write to file
 	}
 }
 
+/**
+ * @brief      Divides two numbers and then rounds it up to the nearest integer
+ *
+ * https://stackoverflow.com/a/30824434
+ *
+ * @param[in]  a     The dividend
+ * @param[in]  b     The divisor
+ *
+ * @tparam     T     The type of the dividend
+ * @tparam     U     The type of the divisor
+ *
+ * @return     The quotient that is rounded up to the nearest integer
+ */
+template <typename T, typename U>
+ALL_DEVICES T ceil_div(T const a, U const b) {
+	return a/b + (a%b > 0);
+}
+
+/**
+ * @brief      Formats the size by adding a unit 
+ *
+ * @param[in]  size       The size
+ * @param[in]  is_binary  Indicates if binary
+ *
+ * @tparam     T          The type of size (e.g. size_t)
+ *
+ * @return     The size formatted in a string
+ */
+template <typename T>
+HOST std::string size_to_string(const T& size, const bool& is_binary = true) {
+	std::stringstream string_stream;
+
+	static char size_units[] = {'\0', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'};
+	auto kb = is_binary ? 1028 : 1000;
+	auto result = static_cast<double>(size);
+	size_t i;
+
+	for (i = 0; result > kb; i++){
+		result /= kb;
+	}
+
+	auto number_of_chunks = ceil_div(size, 65536);
+
+	string_stream 
+		<< result << size_units[i] 
+		<< (is_binary ? "iB (" : "B (") 
+		<< number_of_chunks << " 64KB-chunk" 
+		<< (number_of_chunks == 1 ? '\0' : 's') << ')';
+
+	return string_stream.str();
+}
+
+/**
+ * @brief      Initializes a `MemoryManager` object with the given heap size
+ *
+ * @param[in]  heap_size             The size of the heap
+ *
+ * @tparam     MemoryAllocator  { description }
+ *
+ * @return     { description_of_the_return_value }
+ */
 template <typename MemoryAllocator>
-HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t size) : memory_allocator(MemoryAllocator(size)) {
+HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size, std::string filename) : memory_allocator(MemoryAllocator(heap_size)) {
 	int device;
-	size_t heap_size;
-	int major_capability;
-	int minor_capability;
+	size_t cuda_heap_size;
 	int runtime_version;
 
 	cudaGetDevice(&device);
 	cudaDeviceProp prop;
 	cudaGetDeviceProperties(&prop, device);
-	cudaDeviceGetLimit(&heap_size, cudaLimitMallocHeapSize);
-	cudaDeviceGetAttribute(&major_capability, cudaDevAttrComputeCapabilityMajor, device);
-	cudaDeviceGetAttribute(&minor_capability, cudaDevAttrComputeCapabilityMinor, device);
+	cudaDeviceGetLimit(&cuda_heap_size, cudaLimitMallocHeapSize);
 	cudaRuntimeGetVersion(&runtime_version);
 
+	std::fstream file(filename, std::ios::out );
 
-	std::cout << "---\n";
-	std::cout << 
-		"device: " << prop.name << " " << prop.major << "." << prop.minor << 
-		"(" << major_capability << "." << minor_capability << ")\n";
-	std::cout << "device number: " << device << "\n"; 
-	std::cout << "cuda version:" << runtime_version << "\n";
-	std::cout << "heap size: " << heap_size << "\n";
-	std::cout << "---\n";
+	file << "---\n";
+	file << "device: " << prop.name << " " << prop.major << "." << prop.minor << "\n";
+	file << "device number: " << device << "\n"; 
+	file << "cuda version: " << runtime_version << "\n";
+	file << "cuda heap size: " << size_to_string(cuda_heap_size) << "\n";
+	file << "heap size: " << size_to_string(heap_size) << "\n";
+	file << "---\n";
 
-	std::cout << 
+	file << 
 		"kernel name,"
 		"type,"
 		"clock,"
@@ -211,16 +229,22 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t size) : memory_allocat
 		"blockIdx.z,"
 		"threadIdx.x,"
 		"threadIdx.y,"
-		"threadIdx.z," 
+		"threadIdx.z" 
 		<< std::endl;
-
 }
 
+/**
+ * @brief      Allocates a section of memory with the given `size` using the memory allocator and logs the allocation-related information
+ *
+ * @param[in]  size             The size of memory that would be allocated
+ * @param[in]  log_data         The array where log information related to the dealloaction will be stored
+ *
+ * @tparam     MemoryAllocator  The memory allocator that will be used to free the section of memory
+ *
+ * @return     The pointer that refers to the allocated memory
+ */
 template <typename MemoryAllocator>
 DEVICE __forceinline__ void* MemoryManager<MemoryAllocator>::malloc(size_t size, LogDataArray log_data) {
-	// 3 "heavy" calls: malloc, clock64 read, printf
-	// not sure how to order
-
 	auto pointer = memory_allocator.malloc(size);
 	auto tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -234,6 +258,14 @@ DEVICE __forceinline__ void* MemoryManager<MemoryAllocator>::malloc(size_t size,
 	return pointer;
 }
 
+/**
+ * @brief      Frees a section of memory pointed by the pointer using the memory allocator and logs the deallocation-related information
+ *
+ * @param      pointer          The pointer that points to the memory that would be freed
+ * @param[in]  log_data         The array where log information related to the dealloaction will be stored
+ *
+ * @tparam     MemoryAllocator  The memory allocator that will be used to free the section of memory
+ */
 template <typename MemoryAllocator>
 DEVICE __forceinline__ void MemoryManager<MemoryAllocator>::free(void* pointer, LogDataArray log_data) {
 	memory_allocator.free(pointer);
@@ -244,8 +276,7 @@ DEVICE __forceinline__ void MemoryManager<MemoryAllocator>::free(void* pointer, 
 	log_data.thread_id_arr[tid] = threadIdx;
 	log_data.block_id_arr[tid] = blockIdx;
 	log_data.address_arr[tid] = pointer;
-	log_data.memory_size_arr[tid] = 0; // note: somehow get memory size
-	log_data.type_arr[tid] = 1; // MemoryOperation::Free;
+	log_data.memory_size_arr[tid] = 0; // TODO: somehow get memory size
+	log_data.type_arr[tid] = 1; 
 }
-
 #endif

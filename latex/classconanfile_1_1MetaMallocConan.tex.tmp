@@ -1,0 +1,36 @@
+\hypertarget{classconanfile_1_1MetaMallocConan}{}\doxysection{conanfile.\+Meta\+Malloc\+Conan Class Reference}
+\label{classconanfile_1_1MetaMallocConan}\index{conanfile.MetaMallocConan@{conanfile.MetaMallocConan}}
+
+
+Inheritance diagram for conanfile.\+Meta\+Malloc\+Conan\+:
+% FIG 0
+
+
+Collaboration diagram for conanfile.\+Meta\+Malloc\+Conan\+:
+% FIG 1
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classconanfile_1_1MetaMallocConan_ab147ab8e40fd600b926fe2f7d8033a95}\label{classconanfile_1_1MetaMallocConan_ab147ab8e40fd600b926fe2f7d8033a95}} 
+def {\bfseries build} (self)
+\end{DoxyCompactItemize}
+\doxysubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classconanfile_1_1MetaMallocConan_a53a6774de5cb2e6dbe8e0a2917b0ff8c}\label{classconanfile_1_1MetaMallocConan_a53a6774de5cb2e6dbe8e0a2917b0ff8c}} 
+string {\bfseries exports\+\_\+sources} = \char`\"{}src/$\ast$\char`\"{}
+\item 
+\mbox{\Hypertarget{classconanfile_1_1MetaMallocConan_a0a9ac192c211f40367451acfd955604e}\label{classconanfile_1_1MetaMallocConan_a0a9ac192c211f40367451acfd955604e}} 
+string {\bfseries generators} = \textquotesingle{}pkg\+\_\+config\textquotesingle{}
+\item 
+\mbox{\Hypertarget{classconanfile_1_1MetaMallocConan_ac9b385dd13d7e45aaa9abe887495fe16}\label{classconanfile_1_1MetaMallocConan_ac9b385dd13d7e45aaa9abe887495fe16}} 
+string {\bfseries requires} = \textquotesingle{}tl-\/expected/20190710\textquotesingle{}
+\item 
+\mbox{\Hypertarget{classconanfile_1_1MetaMallocConan_a97ef08db5341c490fcf1d97a7e1f038a}\label{classconanfile_1_1MetaMallocConan_a97ef08db5341c490fcf1d97a7e1f038a}} 
+string {\bfseries settings} = \textquotesingle{}os\textquotesingle{}, \textquotesingle{}compiler\textquotesingle{}, \textquotesingle{}build\+\_\+type\textquotesingle{}, \textquotesingle{}arch\textquotesingle{}
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+conanfile.\+py\end{DoxyCompactItemize}
