@@ -1,8 +1,6 @@
 #ifndef MetaMallocCUH
 #define MetaMallocCUH 
 #include <iostream>
-#include <sstream>
-#include <fstream>
 
 // https://stackoverflow.com/a/28166605
 #if defined(__GNUC__) || defined(__GNUG__)
@@ -24,24 +22,11 @@
 	#endif
 #endif
 
-enum class MemoryOperation {
-	Free,
-	Allocation
-};
-
 enum memoryOperation {
 	Free,
 	Allocation
 };
 
-const char* to_s(MemoryOperation memory_operation) {
-	switch (memory_operation) {
-		case MemoryOperation::Free:
-			return "free";
-		case MemoryOperation::Allocation:
-			return "malloc";
-	}
-}
 
 /**
  * @brief      Consists of allocation-related information to be stored in a CSV-row format

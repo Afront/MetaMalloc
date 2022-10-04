@@ -2,7 +2,7 @@
 #define MetaMallocImpl
 #include <iostream>
 #include <sstream>
-// #include <fstream>
+#include <fstream>
 #include "meta_malloc.cuh"
 
 // https://stackoverflow.com/a/28166605
@@ -47,7 +47,6 @@ ALL_DEVICES size_t LogDataArray::length() {
 		grid_dim.x * grid_dim.y * grid_dim.z;
 }
 
-
 /**
  * @brief      Constructs a new instance of `LogDataArray`
  *
@@ -56,7 +55,6 @@ ALL_DEVICES size_t LogDataArray::length() {
  * @param[in]  block_dim        The block dimension
  */
 HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_dim, const dim3& block_dim) : block_dim(block_dim), grid_dim(grid_dim) {
-	// to_CUDAResult(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
 	error_check(cudaMallocManaged(&kernel_name, sizeof(char) * kernel_name_str.size()));
 
 	size_t i = 0;
@@ -65,7 +63,6 @@ HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_di
 		i++;
 	}
 
-
 	error_check(cudaMallocManaged(&clock_arr, sizeof(int64_t) * length()));
 	error_check(cudaMallocManaged(&thread_id_arr, sizeof(dim3) * length()));
 	error_check(cudaMallocManaged(&block_id_arr, sizeof(dim3) * length()));
@@ -73,7 +70,6 @@ HOST LogDataArray::LogDataArray(std::string kernel_name_str, const dim3& grid_di
 	error_check(cudaMallocManaged(&memory_size_arr, sizeof(size_t) * length()));
 	error_check(cudaMallocManaged(&type_arr, sizeof(size_t) * length()));
 }
-
 
 /**
  * @brief      Explicitly frees the `LogDataArray` object
@@ -185,7 +181,6 @@ HOST std::string size_to_string(const T& size, const bool& is_binary = true) {
 	return string_stream.str();
 }
 
-
 /**
  * @brief      Initializes a `MemoryManager` object with the given heap size
  *
@@ -236,7 +231,6 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size, std::string
 		"threadIdx.y,"
 		"threadIdx.z" 
 		<< std::endl;
-
 }
 
 /**
@@ -251,9 +245,6 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size, std::string
  */
 template <typename MemoryAllocator>
 DEVICE __forceinline__ void* MemoryManager<MemoryAllocator>::malloc(size_t size, LogDataArray log_data) {
-	// 3 "heavy" calls: malloc, clock64 read, printf
-	// not sure how to order
-
 	auto pointer = memory_allocator.malloc(size);
 	auto tid = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -286,6 +277,6 @@ DEVICE __forceinline__ void MemoryManager<MemoryAllocator>::free(void* pointer, 
 	log_data.block_id_arr[tid] = blockIdx;
 	log_data.address_arr[tid] = pointer;
 	log_data.memory_size_arr[tid] = 0; // TODO: somehow get memory size
-	log_data.type_arr[tid] = 1; // MemoryOperation::Free;
+	log_data.type_arr[tid] = 1; 
 }
 #endif
