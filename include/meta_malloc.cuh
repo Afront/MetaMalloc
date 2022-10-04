@@ -76,7 +76,7 @@ class MemoryManager {
 	MemoryAllocator memory_allocator;
 
 public:	
-	HOST MemoryManager(size_t size);
+	HOST MemoryManager(size_t size, std::string filename);
 	DEVICE __forceinline__ void* malloc(size_t size, LogDataArray log_data);
 	DEVICE __forceinline__ void free(void* pointer, LogDataArray log_data);
 };

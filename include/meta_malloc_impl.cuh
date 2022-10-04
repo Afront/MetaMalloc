@@ -125,9 +125,11 @@ HOST std::string LogDataArray::data_to_s(size_t i) {
  * @param[in]  filename  The filename
  */
 HOST void LogDataArray::write_to_file(std::string filename) {
+	std::fstream file(filename, std::ios::out | std::ios::app);
+
 	for (size_t i = 0; i < length(); i++){
 		auto data_str = data_to_s(i);
-		if (data_str != "") std::cout << data_str << '\n'; // -> write to file
+		if (data_str != "") file << data_str << '\n'; // -> write to file
 	}
 }
 
@@ -194,7 +196,7 @@ HOST std::string size_to_string(const T& size, const bool& is_binary = true) {
  * @return     { description_of_the_return_value }
  */
 template <typename MemoryAllocator>
-HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size) : memory_allocator(MemoryAllocator(heap_size)) {
+HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size, std::string filename) : memory_allocator(MemoryAllocator(heap_size)) {
 	int device;
 	size_t cuda_heap_size;
 	int runtime_version;
@@ -205,16 +207,17 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size) : memory_al
 	cudaDeviceGetLimit(&cuda_heap_size, cudaLimitMallocHeapSize);
 	cudaRuntimeGetVersion(&runtime_version);
 
-	std::cout << "---\n";
-	std::cout << 
-		"device: " << prop.name << " " << prop.major << "." << prop.minor << "\n";
-	std::cout << "device number: " << device << "\n"; 
-	std::cout << "cuda version:" << runtime_version << "\n";
-	std::cout << "cuda heap size: " << size_to_string(cuda_heap_size) << "\n";
-	std::cout << "heap size: " << size_to_string(heap_size) << "\n";
-	std::cout << "---\n";
+	std::fstream file(filename, std::ios::out );
 
-	std::cout << 
+	file << "---\n";
+	file << "device: " << prop.name << " " << prop.major << "." << prop.minor << "\n";
+	file << "device number: " << device << "\n"; 
+	file << "cuda version:" << runtime_version << "\n";
+	file << "cuda heap size: " << size_to_string(cuda_heap_size) << "\n";
+	file << "heap size: " << size_to_string(heap_size) << "\n";
+	file << "---\n";
+
+	file << 
 		"kernel name,"
 		"type,"
 		"clock,"
