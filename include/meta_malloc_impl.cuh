@@ -207,7 +207,7 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size, std::string
 	file << "---\n";
 	file << "device: " << prop.name << " " << prop.major << "." << prop.minor << "\n";
 	file << "device number: " << device << "\n"; 
-	file << "cuda version:" << runtime_version << "\n";
+	file << "cuda version: " << runtime_version << "\n";
 	file << "cuda heap size: " << size_to_string(cuda_heap_size) << "\n";
 	file << "heap size: " << size_to_string(heap_size) << "\n";
 	file << "---\n";
