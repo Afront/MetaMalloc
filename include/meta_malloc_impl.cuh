@@ -131,12 +131,34 @@ HOST void LogDataArray::write_to_file(std::string filename) {
 	}
 }
 
-// https://stackoverflow.com/a/30824434
+/**
+ * @brief      Divides two numbers and then rounds it up to the nearest integer
+ *
+ * https://stackoverflow.com/a/30824434
+ *
+ * @param[in]  a     The dividend
+ * @param[in]  b     The divisor
+ *
+ * @tparam     T     The type of the dividend
+ * @tparam     U     The type of the divisor
+ *
+ * @return     The quotient that is rounded up to the nearest integer
+ */
 template <typename T, typename U>
 ALL_DEVICES T ceil_div(T const a, U const b) {
 	return a/b + (a%b > 0);
 }
 
+/**
+ * @brief      Formats the size by adding a unit 
+ *
+ * @param[in]  size       The size
+ * @param[in]  is_binary  Indicates if binary
+ *
+ * @tparam     T          The type of size (e.g. size_t)
+ *
+ * @return     The size formatted in a string
+ */
 template <typename T>
 HOST std::string size_to_string(const T& size, const bool& is_binary = true) {
 	std::stringstream string_stream;
@@ -260,8 +282,7 @@ DEVICE __forceinline__ void MemoryManager<MemoryAllocator>::free(void* pointer, 
 	log_data.thread_id_arr[tid] = threadIdx;
 	log_data.block_id_arr[tid] = blockIdx;
 	log_data.address_arr[tid] = pointer;
-	log_data.memory_size_arr[tid] = 0; // note: somehow get memory size
+	log_data.memory_size_arr[tid] = 0; // TODO: somehow get memory size
 	log_data.type_arr[tid] = 1; // MemoryOperation::Free;
 }
-
 #endif
