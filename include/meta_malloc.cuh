@@ -117,9 +117,9 @@ class MemoryManager {
 	MemoryAllocator memory_allocator;
 
 public:	
-	HOST MemoryManager(size_t size) : memory_allocator(MemoryAllocator(size)) {}
+	HOST MemoryManager(size_t size);
 	DEVICE __forceinline__ void* malloc(size_t size, LogDataArray log_data);
-	DEVICE __forceinline__ void free(void* pointer);
+	DEVICE __forceinline__ void free(void* pointer, LogDataArray log_data);
 };
 
 #endif
