@@ -195,19 +195,22 @@ HOST MemoryManager<MemoryAllocator>::MemoryManager(size_t heap_size, std::string
 	int device;
 	size_t cuda_heap_size;
 	int runtime_version;
+	uint major;
+	uint minor;
 
 	cudaGetDevice(&device);
 	cudaDeviceProp prop;
 	cudaGetDeviceProperties(&prop, device);
 	cudaDeviceGetLimit(&cuda_heap_size, cudaLimitMallocHeapSize);
 	cudaRuntimeGetVersion(&runtime_version);
-
-	std::fstream file(filename, std::ios::out );
+	major = runtime_version/1000;
+	minor = (runtime_version - (major * 1000))/10;
+	std::fstream file(filename, std::ios::out);
 
 	file << "---\n";
 	file << "device: " << prop.name << " " << prop.major << "." << prop.minor << "\n";
 	file << "device number: " << device << "\n"; 
-	file << "cuda version: " << runtime_version << "\n";
+	file << "cuda runtime version: " << major << "." << minor << "\n";
 	file << "cuda heap size: " << size_to_string(cuda_heap_size) << "\n";
 	file << "heap size: " << size_to_string(heap_size) << "\n";
 	file << "---\n";
